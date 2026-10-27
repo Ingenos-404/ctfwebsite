@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Nexus - Capture The Flag Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            900: '#0a0f1d',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151',
+                            neon: '#00ff66',
+                            cyan: '#00f0ff',
+                            purple: '#9d4edd',
+                            pink: '#ff007f'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #07090e;
+            color: #f3f4f6;
+        }
+        .glow-neon {
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+        .text-glow-neon {
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff66;
+        }
+        .matrix-bg {
+            background-image: radial-gradient(rgba(0, 255, 102, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="matrix-bg min-h-screen flex flex-col selection:bg-cyber-neon selection:text-black">
+
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-cyber-900/90 backdrop-blur-md border-b border-cyber-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="w-10 h-10 rounded bg-cyber-800 border border-cyber-neon flex items-center justify-center glow-neon">
+                        <i class="fa-solid fa-terminal text-cyber-neon"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-wider text-white">CTF<span class="text-cyber-neon">_NEXUS</span></span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn text-cyber-neon transition font-medium flex items-center space-x-2 px-3 py-2 rounded bg-cyber-800/50 border border-cyber-neon/30">
+                        <i class="fa-solid fa-house"></i><span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('challenges')" id="nav-challenges" class="nav-btn text-gray-400 hover:text-cyber-cyan transition font-medium flex items-center space-x-2 px-3 py-2 rounded">
+                        <i class="fa-solid fa-flag"></i><span>Challenges</span>
+                    </button>
+                    <button onclick="switchTab('scoreboard')" id="nav-scoreboard" class="nav-btn text-gray-400 hover:text-cyber-cyan transition font-medium flex items-center space-x-2 px-3 py-2 rounded">
+                        <i class="fa-solid fa-trophy"></i><span>Scoreboard</span>
+                    </button>
+                    <button onclick="switchTab('rules')" id="nav-rules" class="nav-btn text-gray-400 hover:text-cyber-cyan transition font-medium flex items-center space-x-2 px-3 py-2 rounded">
+                        <i class="fa-solid fa-book"></i><span>Rules & Info</span>
+                    </button>
+                </div>
+                <!-- User Profile & Team Status -->
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex flex-col text-right">
+                        <span id="display-team-name" class="text-xs text-cyber-cyan font-bold">CyberSec_Elite</span>
+                        <span class="text-xs text-gray-400"><span id="header-score">0</span> pts</span>
+                    </div>
+                    <button onclick="openProfileModal()" class="w-9 h-9 rounded-full bg-cyber-800 border border-cyber-cyan flex items-center justify-center text-cyber-cyan hover:bg-cyber-cyan hover:text-black transition glow-cyan">
+                        <i class="fa-solid fa-user-secret"></i>
+                    </button>
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-400 hover:text-white p-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-cyber-900 border-b border-cyber-700 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('dashboard'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded text-cyber-neon bg-cyber-800/50">Dashboard</button>
+            <button onclick="switchTab('challenges'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded text-gray-300 hover:text-cyber-cyan">Challenges</button>
+            <button onclick="switchTab('scoreboard'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded text-gray-300 hover:text-cyber-cyan">Scoreboard</button>
+            <button onclick="switchTab('rules'); toggleMobileMenu();" class="block w-full text-left px-3 py-2 rounded text-gray-300 hover:text-cyber-cyan">Rules & Info</button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content space-y-8 animate-fade">
+            <!-- Hero Banner & Countdown -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyber-800 via-cyber-900 to-cyber-800 border border-cyber-700 p-8 shadow-2xl">
+                <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
+                    <i class="fa-solid fa-shield-halved text-9xl text-cyber-neon"></i>
+                </div>
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyber-neon/10 border border-cyber-neon/30 text-cyber-neon text-xs font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-cyber-neon animate-pulse"></span>
+                            <span>COMPETITION LIVE NOW</span>
+                        </div>
+                        <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+                            NEXUS CTF <span class="text-cyber-neon text-glow-neon">2026</span>
+                        </h1>
+                        <p class="text-gray-300 text-sm sm:text-base leading-relaxed">
+                            Test your offensive security, cryptography, binary exploitation, and reverse engineering skills against elite hackers worldwide. Capture flags, climb the leaderboard, and claim ultimate cyber supremacy.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="switchTab('challenges')" class="px-6 py-3 rounded-lg bg-cyber-neon text-black font-bold hover:bg-emerald-400 transition flex items-center space-x-2 glow-neon">
+                                <i class="fa-solid fa-flag"></i><span>Start Hacking</span>
+                            </button>
+                            <button onclick="switchTab('scoreboard')" class="px-6 py-3 rounded-lg bg-cyber-800 text-cyber-cyan border border-cyber-cyan/40 hover:bg-cyber-cyan/10 transition flex items-center space-x-2">
+                                <i class="fa-solid fa-trophy"></i><span>View Leaderboard</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Countdown Timer Widget -->
+                    <div class="bg-cyber-900/80 border border-cyber-700 rounded-xl p-6 backdrop-blur-md text-center space-y-4 shadow-inner">
+                        <div class="text-xs uppercase tracking-widest text-gray-400 font-semibold">Competition Ends In</div>
+                        <div id="countdown-timer" class="grid grid-cols-4 gap-2 text-cyber-neon font-bold">
+                            <div class="bg-cyber-800 p-2 rounded border border-cyber-700">
+                                <span id="timer-hours" class="text-2xl sm:text-3xl">24</span>
+                                <span class="block text-[10px] text-gray-400 font-normal">HOURS</span>
+                            </div>
+                            <div class="bg-cyber-800 p-2 rounded border border-cyber-700">
+                                <span id="timer-mins" class="text-2xl sm:text-3xl">00</span>
+                                <span class="block text-[10px] text-gray-400 font-normal">MINS</span>
+                            </div>
+                            <div class="bg-cyber-800 p-2 rounded border border-cyber-700">
+                                <span id="timer-secs" class="text-2xl sm:text-3xl">00</span>
+                                <span class="block text-[10px] text-gray-400 font-normal">SECS</span>
+                            </div>
+                            <div class="bg-cyber-800 p-2 rounded border border-cyber-700 flex flex-col justify-center">
+                                <span class="text-xs text-cyber-cyan font-bold">LIVE</span>
+                                <span class="block text-[10px] text-gray-400 font-normal">STATUS</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 pt-2 border-t border-cyber-800 flex justify-between">
+                            <span>Registered Teams: <strong class="text-white">1,482</strong></span>
+                            <span>Solved Flags: <strong id="stats-total-solved" class="text-cyber-neon">0</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-cyber-800/60 border border-cyber-700/60 rounded-xl p-5 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-lg bg-cyber-neon/10 border border-cyber-neon/30 flex items-center justify-center text-cyber-neon text-xl">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-semibold">Your Rank</div>
+                        <div id="stat-rank" class="text-2xl font-bold text-white">#4</div>
+                    </div>
+                </div>
+                <div class="bg-cyber-800/60 border border-cyber-700/60 rounded-xl p-5 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-xl">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-semibold">Total Points</div>
+                        <div id="stat-points" class="text-2xl font-bold text-cyber-cyan">0</div>
+                    </div>
+                </div>
+                <div class="bg-cyber-800/60 border border-cyber-700/60 rounded-xl p-5 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-semibold">Challenges Solved</div>
+                        <div id="stat-solved-count" class="text-2xl font-bold text-purple-300">0 / 12</div>
+                    </div>
+                </div>
+                <div class="bg-cyber-800/60 border border-cyber-700/60 rounded-xl p-5 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-semibold">Accuracy Rate</div>
+                        <div id="stat-accuracy" class="text-2xl font-bold text-pink-300">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Solves Feed & Top Teams Preview -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Recent Solves -->
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-cyber-700">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-bolt text-cyber-neon"></i>
+                            <span>Recent Solves Feed</span>
+                        </h2>
+                        <span class="text-xs text-gray-400">Real-time updates</span>
+                    </div>
+                    <div id="recent-solves-list" class="space-y-3 max-h-72 overflow-y-auto pr-2">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Top 5 Teams Preview -->
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-cyber-700">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-trophy text-cyber-cyan"></i>
+                            <span>Top Teams Leaderboard</span>
+                        </h2>
+                        <button onclick="switchTab('scoreboard')" class="text-xs text-cyber-cyan hover:underline">View All</button>
+                    </div>
+                    <div id="dashboard-leaderboard-list" class="space-y-3">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CHALLENGES -->
+        <section id="tab-challenges" class="tab-content hidden space-y-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-cyber-700">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center space-x-3">
+                        <i class="fa-solid fa-flag text-cyber-cyan"></i>
+                        <span>Challenge Arena</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm mt-1">Select a category, inspect the assets, and submit the correct flag.</p>
+                </div>
+                <!-- Category Filter Buttons -->
+                <div id="category-filters" class="flex flex-wrap gap-2">
+                    <button onclick="filterChallenges('All')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-cyan text-black transition">All</button>
+                    <button onclick="filterChallenges('Web')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Web</button>
+                    <button onclick="filterChallenges('Crypto')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Crypto</button>
+                    <button onclick="filterChallenges('Pwn')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Pwn</button>
+                    <button onclick="filterChallenges('Reverse')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Reverse</button>
+                    <button onclick="filterChallenges('Forensics')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Forensics</button>
+                    <button onclick="filterChallenges('Misc')" class="cat-btn px-3 py-1.5 rounded text-xs font-semibold bg-cyber-800 text-gray-300 hover:text-white border border-cyber-700 transition">Misc</button>
+                </div>
+            </div>
+
+            <!-- Challenges Grid -->
+            <div id="challenges-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically rendered via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: SCOREBOARD -->
+        <section id="tab-scoreboard" class="tab-content hidden space-y-6">
+            <div class="pb-4 border-b border-cyber-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center space-x-3">
+                        <i class="fa-solid fa-trophy text-cyber-neon"></i>
+                        <span>Live Scoreboard</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm mt-1">Global team rankings updated in real time as flags are captured.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded bg-cyber-800 border border-cyber-700 text-xs text-gray-300">
+                        <i class="fa-solid fa-rotate text-cyber-neon mr-2 animate-spin"></i> Auto-Sync Active
+                    </span>
+                </div>
+            </div>
+
+            <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-cyber-800 text-gray-400 text-xs uppercase tracking-wider border-b border-cyber-700">
+                                <th class="py-4 px-6">Rank</th>
+                                <th class="py-4 px-6">Team Name</th>
+                                <th class="py-4 px-6">Solved</th>
+                                <th class="py-4 px-6">Last Solve Time</th>
+                                <th class="py-4 px-6 text-right">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoreboard-table-body" class="divide-y divide-cyber-700/50 text-sm">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: RULES & INFO -->
+        <section id="tab-rules" class="tab-content hidden space-y-8 max-w-4xl mx-auto">
+            <div class="text-center space-y-3 pb-4 border-b border-cyber-700">
+                <h1 class="text-3xl font-extrabold text-white flex items-center justify-center space-x-3">
+                    <i class="fa-solid fa-book-open text-cyber-cyan"></i>
+                    <span>Rules & Guidelines</span>
+                </h1>
+                <p class="text-gray-400 text-sm">Please read the competition rules carefully before participating.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-cyber-neon font-bold text-lg">
+                        <i class="fa-solid fa-gavel"></i>
+                        <span>General Conduct</span>
+                    </div>
+                    <ul class="space-y-2 text-sm text-gray-300 list-disc list-inside">
+                        <li>Do not attack the infrastructure hosting the CTF platform.</li>
+                        <li>No brute-forcing challenge flags or login endpoints.</li>
+                        <li>Do not share flags or solutions with other teams during the event.</li>
+                        <li>Collaboration within your registered team (max 4 members) is encouraged.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-cyber-cyan font-bold text-lg">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                        <span>Flag Format</span>
+                    </div>
+                    <p class="text-sm text-gray-300 leading-relaxed">
+                        All flags follow the standard Nexus CTF format unless explicitly specified in the challenge description:
+                    </p>
+                    <div class="bg-cyber-900 border border-cyber-700 p-3 rounded font-mono text-cyber-neon text-sm">
+                        NEXUS{this_is_an_example_flag_12345}
+                    </div>
+                    <p class="text-xs text-gray-400">Flags are case-sensitive. Ensure you submit the complete string including the curly braces.</p>
+                </div>
+
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-purple-400 font-bold text-lg">
+                        <i class="fa-solid fa-ranking-star"></i>
+                        <span>Scoring System</span>
+                    </div>
+                    <p class="text-sm text-gray-300 leading-relaxed">
+                        Challenges use a dynamic or fixed point system ranging from 100 to 500 points based on difficulty. In the event of a tie in total score, the team that achieved their final score first will be ranked higher.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-800/40 border border-cyber-700 rounded-xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-pink-400 font-bold text-lg">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support & Help</span>
+                    </div>
+                    <p class="text-sm text-gray-300 leading-relaxed">
+                        If you encounter broken challenge instances or have urgent inquiries, reach out to the admin crew on our official Discord server or open an admin ticket in your dashboard.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SUBMISSION MODAL -->
+    <div id="flag-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden animate-fade">
+        <div class="bg-cyber-800 border border-cyber-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative space-y-6 m-4">
+            <button onclick="closeFlagModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="space-y-2">
+                <div id="modal-category" class="text-xs font-bold text-cyber-cyan uppercase tracking-wider">Web</div>
+                <h2 id="modal-title" class="text-xl font-bold text-white">Challenge Title</h2>
+                <div class="flex items-center space-x-4 text-xs text-gray-400 pt-1">
+                    <span>Points: <strong id="modal-points" class="text-cyber-neon">250</strong></span>
+                    <span>Solves: <strong id="modal-solves" class="text-white">42</strong></span>
+                </div>
+            </div>
+            <div class="bg-cyber-900 border border-cyber-700 p-4 rounded-xl text-sm text-gray-300 space-y-3">
+                <p id="modal-desc" class="leading-relaxed">Challenge description goes here...</p>
+                <div id="modal-attachment" class="pt-2">
+                    <a id="modal-file-link" href="#" target="_blank" class="inline-flex items-center space-x-2 px-3 py-1.5 rounded bg-cyber-800 hover:bg-cyber-700 border border-cyber-600 text-cyber-cyan text-xs font-semibold transition">
+                        <i class="fa-solid fa-download"></i>
+                        <span id="modal-file-name">download_asset.zip</span>
+                    </a>
+                </div>
+            </div>
+            <!-- Flag Input Form -->
+            <div class="space-y-3">
+                <label class="block text-xs uppercase font-semibold text-gray-400">Enter Flag</label>
+                <div class="flex space-x-2">
+                    <input type="text" id="flag-input" placeholder="NEXUS{...}" class="flex-grow bg-cyber-900 border border-cyber-700 rounded-lg px-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-cyber-neon transition">
+                    <button onclick="submitFlag()" class="px-5 py-2.5 rounded-lg bg-cyber-neon text-black font-bold hover:bg-emerald-400 transition flex items-center space-x-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Submit</span>
+                    </button>
+                </div>
+                <!-- Feedback message box -->
+                <div id="submission-feedback" class="hidden p-3 rounded-lg text-xs font-mono"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE EDIT MODAL -->
+    <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden animate-fade">
+        <div class="bg-cyber-800 border border-cyber-700 w-full max-w-md rounded-2xl p-6 shadow-2xl relative space-y-6 m-4">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-user-gear text-cyber-cyan"></i>
+                <span>Team Profile Settings</span>
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-gray-400 mb-2">Team Name</label>
+                    <input type="text" id="profile-team-input" class="w-full bg-cyber-900 border border-cyber-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyber-cyan">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-gray-400 mb-2">Avatar / Icon Style</label>
+                    <select id="profile-avatar-input" class="w-full bg-cyber-900 border border-cyber-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyber-cyan">
+                        <option value="user-secret">Agent / Hacker</option>
+                        <option value="skull">Skull / Elite</option>
+                        <option value="terminal">Terminal / Code</option>
+                        <option value="robot">Cyber Bot</option>
+                    </select>
+                </div>
+                <button onclick="saveProfile()" class="w-full py-3 rounded-lg bg-cyber-cyan text-black font-bold hover:bg-cyan-300 transition">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="bg-cyber-900 border-t border-cyber-700/50 py-6 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>&copy; 2026 CTF Nexus Platform. All rights reserved.</div>
+            <div class="flex space-x-4">
+                <a href="#" class="hover:text-cyber-neon transition">Discord</a>
+                <a href="#" class="hover:text-cyber-neon transition">GitHub</a>
+                <a href="#" class="hover:text-cyber-neon transition">API Docs</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Challenges Dataset
+        const challengesData = [
+            {
+                id: 1,
+                title: "Insecure JWT Bypass",
+                category: "Web",
+                difficulty: "Easy",
+                points: 150,
+                solves: 124,
+                description: "We found an admin portal at /admin protected by JWT tokens. Can you forge a token or bypass signature verification to grab the flag?",
+                flag: "NEXUS{jwt_s1gn4tur3_byp4ss_succ3ss}",
+                file: "auth_service.py"
+            },
+            {
+                id: 2,
+                title: "RSA Common Modulus",
+                category: "Crypto",
+                difficulty: "Medium",
+                points: 250,
+                solves: 82,
+                description: "Two ciphertexts were encrypted using the same modulus N but different public exponents e1 and e2. Recover the plaintext message.",
+                flag: "NEXUS{rs4_common_modulus_attack_1337}",
+                file: "chal.py"
+            },
+            {
+                id: 3,
+                title: "Stack Buffer Overflow 101",
+                category: "Pwn",
+                difficulty: "Easy",
+                points: 100,
+                solves: 210,
+                description: "A classic vulnerable binary using gets(). Overwrite the instruction pointer to redirect execution to the win() function.",
+                flag: "NEXUS{b0f_ret2win_is_fun_9988}",
+                file: "vuln_bin"
+            },
+            {
+                id: 4,
+                title: "Custom XOR Obfuscation",
+                category: "Reverse",
+                difficulty: "Medium",
+                points: 200,
+                solves: 95,
+                description: "This ELF binary checks your password by applying a multi-byte XOR key. Reverse engineer the binary to find the correct key and flag.",
+                flag: "NEXUS{rev_xor_byte_magic_2026}",
+                file: "checker.elf"
+            },
+            {
+                id: 5,
+                title: "Hidden in Plain PCAP",
+                category: "Forensics",
+                difficulty: "Easy",
+                points: 150,
+                solves: 160,
+                description: "Analyze the captured network traffic packet dump (PCAP). Someone exfiltrated sensitive files over FTP. Extract the hidden document.",
+                flag: "NEXUS{pcap_ftp_stream_extraction_ok}",
+                file: "capture.pcapng"
+            },
+            {
+                id: 6,
+                title: "The Quantum Enigma",
+                category: "Misc",
+                difficulty: "Hard",
+                points: 400,
+                solves: 24,
+                description: "Decode the quantum entanglement frequency sequence transmitted over the secondary telemetry channel.",
+                flag: "NEXUS{quantum_telemetry_decode_flag}",
+                file: "telemetry.raw"
+            },
+            {
+                id: 7,
+                title: "SQL Injection Blindfold",
+                category: "Web",
+                difficulty: "Medium",
+                points: 300,
+                solves: 65,
+                description: "The search input field is vulnerable to boolean-based blind SQL injection. Extract the admin password hash from the database.",
+                flag: "NEXUS{bl1nd_sqli_time_b4s3d_magic}",
+                file: "webapp_source.zip"
+            },
+            {
+                id: 8,
+                title: "AES ECB Oracle",
+                category: "Crypto",
+                difficulty: "Hard",
+                points: 450,
+                solves: 18,
+                description: "Exploit the padding oracle / ECB block cipher weakness to decrypt the secret admin session token byte by byte.",
+                flag: "NEXUS{ecb_oracle_byte_at_a_time_pwn}",
+                file: "oracle_server.py"
+            },
+            {
+                id: 9,
+                title: "Format String Exploit",
+                category: "Pwn",
+                difficulty: "Hard",
+                points: 500,
+                solves: 12,
+                description: "printf() without format specifiers! Leak memory contents and overwrite GOT entries to hijack execution.",
+                flag: "NEXUS{fmt_str_leak_and_overwrite_win}",
+                file: "pwn_fmt"
+            }
+        ];
+
+        // Initial Leaderboard Data
+        let leaderboardData = [
+            { rank: 1, name: "NullByte_Crew", solved: 9, score: 2600, lastSolve: "5 mins ago", avatar: "skull" },
+            { rank: 2, name: "RootAccess", solved: 8, score: 2350, lastSolve: "12 mins ago", avatar: "user-secret" },
+            { rank: 3, name: "ZeroDayHunters", solved: 7, score: 2100, lastSolve: "28 mins ago", avatar: "terminal" },
+            { rank: 4, name: "CyberSec_Elite", solved: 0, score: 0, lastSolve: "N/A", avatar: "user-secret" },
+            { rank: 5, name: "PacketStormers", solved: 6, score: 1750, lastSolve: "45 mins ago", avatar: "robot" },
+            { rank: 6, name: "BitShifters", solved: 5, score: 1400, lastSolve: "1 hour ago", avatar: "terminal" }
+        ];
+
+        // Recent Solves Stream
+        let recentSolves = [
+            { team: "NullByte_Crew", challenge: "The Quantum Enigma", points: 400, time: "5m ago" },
+            { team: "RootAccess", challenge: "AES ECB Oracle", points: 450, time: "12m ago" },
+            { team: "ZeroDayHunters", challenge: "Format String Exploit", points: 500, time: "28m ago" },
+            { team: "PacketStormers", challenge: "SQL Injection Blindfold", points: 300, time: "45m ago" }
+        ];
+
+        // User State stored in LocalStorage
+        let userState = {
+            teamName: "CyberSec_Elite",
+            avatar: "user-secret",
+            score: 0,
+            solvedIds: [],
+            totalAttempts: 0,
+            successfulAttempts: 0
+        };
+
+        // Load State on Init
+        function initApp() {
+            const saved = localStorage.getItem('nexus_ctf_user');
+            if (saved) {
+                try {
+                    userState = JSON.parse(saved);
+                } catch(e) {}
+            }
+            document.getElementById('profile-team-input').value = userState.teamName;
+            document.getElementById('profile-avatar-input').value = userState.avatar;
+            updateUserDisplay();
+            renderChallenges('All');
+            renderScoreboard();
+            renderDashboardFeeds();
+            startCountdownTimer();
+        }
+
+        function saveUserState() {
+            localStorage.setItem('nexus_ctf_user', JSON.stringify(userState));
+        }
+
+        // Navigation tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyber-neon', 'bg-cyber-800/50', 'border', 'border-cyber-neon/30');
+                btn.classList.add('text-gray-400');
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('text-cyber-neon', 'bg-cyber-800/50', 'border', 'border-cyber-neon/30');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Countdown Timer
+        function startCountdownTimer() {
+            // Set 24 hours countdown from now or fixed target
+            let timeRemaining = 24 * 3600;
+            setInterval(() => {
+                if (timeRemaining > 0) timeRemaining--;
+                let h = Math.floor(timeRemaining / 3600);
+                let m = Math.floor((timeRemaining % 3600) / 60);
+                let s = timeRemaining % 60;
+                document.getElementById('timer-hours').innerText = String(h).padStart(2, '0');
+                document.getElementById('timer-mins').innerText = String(m).padStart(2, '0');
+                document.getElementById('timer-secs').innerText = String(s).padStart(2, '0');
+            }, 1000);
+        }
+
+        // Render Challenges
+        let currentFilter = 'All';
+        function filterChallenges(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-cyber-cyan', 'text-black');
+                btn.classList.add('bg-cyber-800', 'text-gray-300');
+            });
+            event.target.classList.remove('bg-cyber-800', 'text-gray-300');
+            event.target.classList.add('bg-cyber-cyan', 'text-black');
+            renderChallenges(cat);
+        }
+
+        function renderChallenges(filter) {
+            const grid = document.getElementById('challenges-grid');
+            grid.innerHTML = '';
+            
+            const filtered = filter === 'All' ? challengesData : challengesData.filter(c => c.category === filter);
+
+            filtered.forEach(chal => {
+                const isSolved = userState.solvedIds.includes(chal.id);
+                const diffColor = chal.difficulty === 'Easy' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
+                                  chal.difficulty === 'Medium' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 
+                                  'text-rose-400 border-rose-500/30 bg-rose-500/10';
+
+                const card = document.createElement('div');
+                card.className = `bg-cyber-800/60 border ${isSolved ? 'border-cyber-neon/50 bg-cyber-neon/5' : 'border-cyber-700'} rounded-xl p-6 flex flex-col justify-between space-y-4 hover:border-cyber-cyan transition group`;
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 rounded text-xs font-semibold bg-cyber-900 border border-cyber-700 text-cyber-cyan">${chal.category}</span>
+                            <span class="px-2.5 py-1 rounded text-xs font-semibold border ${diffColor}">${chal.difficulty}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-cyber-cyan transition">${chal.title}</h3>
+                        <p class="text-xs text-gray-400 mt-2 line-clamp-2">${chal.description}</p>
+                    </div>
+                    <div class="pt-4 border-t border-cyber-700/60 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400">Reward:</span>
+                            <span class="text-sm font-bold text-cyber-neon ml-1">${chal.points} pts</span>
+                        </div>
+                        <button onclick="openFlagModal(${chal.id})" class="px-4 py-2 rounded-lg text-xs font-bold transition ${isSolved ? 'bg-cyber-neon/20 border border-cyber-neon text-cyber-neon' : 'bg-cyber-700 text-white hover:bg-cyber-cyan hover:text-black'}">
+                            ${isSolved ? '<i class="fa-solid fa-check mr-1"></i> Solved' : 'Solve Chal'}
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Modal Handling
+        let activeChallengeId = null;
+        function openFlagModal(chalId) {
+            activeChallengeId = chalId;
+            const chal = challengesData.find(c => c.id === chalId);
+            if (!chal) return;
+
+            document.getElementById('modal-category').innerText = chal.category;
+            document.getElementById('modal-title').innerText = chal.title;
+            document.getElementById('modal-points').innerText = chal.points;
+            document.getElementById('modal-solves').innerText = chal.solves;
+            document.getElementById('modal-desc').innerText = chal.description;
+            document.getElementById('modal-file-name').innerText = chal.file;
+            document.getElementById('flag-input').value = '';
+            
+            const feedback = document.getElementById('submission-feedback');
+            feedback.className = 'hidden p-3 rounded-lg text-xs font-mono';
+            feedback.innerText = '';
+
+            document.getElementById('flag-modal').classList.remove('hidden');
+        }
+
+        function closeFlagModal() {
+            document.getElementById('flag-modal').classList.add('hidden');
+            activeChallengeId = null;
+        }
+
+        function openProfileModal() {
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        function saveProfile() {
+            const teamName = document.getElementById('profile-team-input').value.trim();
+            const avatar = document.getElementById('profile-avatar-input').value;
+            if (teamName) {
+                userState.teamName = teamName;
+                userState.avatar = avatar;
+                saveUserState();
+                updateUserDisplay();
+                closeProfileModal();
+                showToast("Team profile updated successfully!", "success");
+            }
+        }
+
+        function updateUserDisplay() {
+            document.getElementById('display-team-name').innerText = userState.teamName;
+            document.getElementById('header-score').innerText = userState.score;
+            document.getElementById('stat-points').innerText = userState.score;
+            document.getElementById('stat-solved-count').innerText = `${userState.solvedIds.length} / ${challengesData.length}`;
+            
+            let accuracy = userState.totalAttempts > 0 ? Math.round((userState.successfulAttempts / userState.totalAttempts) * 100) : 100;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+
+            // Update user position in scoreboard if present
+            let userTeamInBoard = leaderboardData.find(t => t.name === userState.teamName);
+            if (userTeamInBoard) {
+                userTeamInBoard.score = userState.score;
+                userTeamInBoard.solved = userState.solvedIds.length;
+            } else {
+                leaderboardData.push({
+                    rank: 0,
+                    name: userState.teamName,
+                    solved: userState.solvedIds.length,
+                    score: userState.score,
+                    lastSolve: "Just now",
+                    avatar: userState.avatar
+                });
+            }
+            sortAndRenderLeaderboard();
+        }
+
+        // Flag Submission Logic
+        function submitFlag() {
+            if (!activeChallengeId) return;
+            const chal = challengesData.find(c => c.id === activeChallengeId);
+            const userFlag = document.getElementById('flag-input').value.trim();
+            const feedback = document.getElementById('submission-feedback');
+
+            userState.totalAttempts++;
+
+            if (userState.solvedIds.includes(chal.id)) {
+                feedback.className = 'p-3 rounded-lg text-xs font-mono bg-amber-500/10 border border-amber-500/30 text-amber-300';
+                feedback.innerText = '[-] You have already solved this challenge!';
+                feedback.classList.remove('hidden');
+                return;
+            }
+
+            if (userFlag === chal.flag) {
+                userState.successfulAttempts++;
+                userState.solvedIds.push(chal.id);
+                userState.score += chal.points;
+                chal.solves++;
+
+                saveUserState();
+                updateUserDisplay();
+                renderChallenges(currentFilter);
+                renderDashboardFeeds();
+
+                // Add to recent solves
+                recentSolves.unshift({
+                    team: userState.teamName,
+                    challenge: chal.title,
+                    points: chal.points,
+                    time: "Just now"
+                });
+
+                feedback.className = 'p-3 rounded-lg text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+                feedback.innerText = '[+] Correct Flag! Score updated successfully.';
+                feedback.classList.remove('hidden');
+                showToast(`Flag Captured! +${chal.points} pts`, 'success');
+
+                setTimeout(() => {
+                    closeFlagModal();
+                }, 1500);
+            } else {
+                saveUserState();
+                feedback.className = 'p-3 rounded-lg text-xs font-mono bg-rose-500/10 border border-rose-500/30 text-rose-400';
+                feedback.innerText = '[-] Incorrect flag. Try again, agent.';
+                feedback.classList.remove('hidden');
+                showToast('Incorrect flag submission', 'error');
+            }
+        }
+
+        // Leaderboard Sorting & Rendering
+        function sortAndRenderLeaderboard() {
+            leaderboardData.sort((a, b) => b.score - a.score);
+            leaderboardData.forEach((team, index) => {
+                team.rank = index + 1;
+                if (team.name === userState.teamName) {
+                    document.getElementById('stat-rank').innerText = `#${team.rank}`;
+                }
+            });
+            renderScoreboard();
+            renderDashboardFeeds();
+        }
+
+        function renderScoreboard() {
+            const tbody = document.getElementById('scoreboard-table-body');
+            tbody.innerHTML = '';
+
+            leaderboardData.forEach(team => {
+                const isUser = team.name === userState.teamName;
+                const row = document.createElement('tr');
+                row.className = isUser ? 'bg-cyber-neon/10 font-semibold' : 'hover:bg-cyber-800/40 transition';
+                row.innerHTML = `
+                    <td class="py-4 px-6">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full ${team.rank === 1 ? 'bg-amber-400 text-black font-bold' : team.rank === 2 ? 'bg-gray-300 text-black font-bold' : team.rank === 3 ? 'bg-amber-700 text-white font-bold' : 'bg-cyber-900 text-gray-400 border border-cyber-700'} text-xs">
+                            ${team.rank}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded bg-cyber-900 border border-cyber-700 flex items-center justify-center text-cyber-cyan">
+                            <i class="fa-solid fa-${team.avatar || 'user-secret'}"></i>
+                        </div>
+                        <span class="${isUser ? 'text-cyber-neon font-bold' : 'text-white'}">${team.name}</span>
+                    </td>
+                    <td class="py-4 px-6 text-gray-300">${team.solved} / ${challengesData.length}</td>
+                    <td class="py-4 px-6 text-gray-400 text-xs">${team.lastSolve}</td>
+                    <td class="py-4 px-6 text-right font-bold text-cyber-cyan">${team.score} pts</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderDashboardFeeds() {
+            // Recent Solves
+            const solvesList = document.getElementById('recent-solves-list');
+            solvesList.innerHTML = '';
+            recentSolves.slice(0, 5).forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 rounded-lg bg-cyber-900/60 border border-cyber-700/50 text-xs';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-flag-checkered text-cyber-neon"></i>
+                        <div>
+                            <strong class="text-white">${s.team}</strong> solved <span class="text-cyber-cyan">${s.challenge}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-cyber-neon font-bold">+${s.points}</span>
+                        <div class="text-[10px] text-gray-500">${s.time}</div>
+                    </div>
+                `;
+                solvesList.appendChild(item);
+            });
+
+            // Dashboard Top 5
+            const dashLead = document.getElementById('dashboard-leaderboard-list');
+            dashLead.innerHTML = '';
+            leaderboardData.slice(0, 5).forEach(team => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 rounded-lg bg-cyber-900/60 border border-cyber-700/50 text-xs';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-cyber-cyan">#${team.rank}</span>
+                        <span class="text-white font-medium">${team.name}</span>
+                    </div>
+                    <div class="text-cyber-neon font-bold">${team.score} pts</div>
+                `;
+                dashLead.appendChild(item);
+            });
+
+            // Total Solved Count
+            let totalSolvedCount = challengesData.reduce((acc, c) => acc + c.solves, 0);
+            document.getElementById('stats-total-solved').innerText = totalSolvedCount;
+        }
+
+        // Toast Notification Helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border text-xs font-mono shadow-2xl flex items-center space-x-3 animate-fade ${type === 'success' ? 'bg-cyber-900 border-cyber-neon text-cyber-neon' : 'bg-cyber-900 border-rose-500 text-rose-400'}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} text-base"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize on Load
+        window.onload = initApp;
+    </script>
+</body>
+</html>
